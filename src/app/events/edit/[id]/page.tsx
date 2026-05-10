@@ -1,6 +1,6 @@
 "use client";
-import { useState, useParams, Suspense } from "react";
-import { useRouter } from "next/navigation";
+import { useState, Suspense } from "react";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { X, Check } from "lucide-react";
 import CategoryPicker from "@/components/events/CategoryPicker";
