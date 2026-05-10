@@ -13,21 +13,14 @@ import { useEvents } from "@/context/EventsContext";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 
 export default function CalendarPage() {
-  const { loading } = useAuthGuard();
-  const { events, children } = useEvents();
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-[#fff8f0]">
-        <p className="text-gray-400">読み込み中...</p>
-      </div>
-    );
-  }
-  const today = new Date();
-  const [year, setYear]             = useState(today.getFullYear());
-  const [month, setMonth]           = useState(today.getMonth() + 1);
-  const [view, setView]             = useState<"month" | "list">("month");
-  const [filterChildId, setFilter]  = useState<string | null>(null);
+  // All hooks must be called before any conditional return
+  const { loading }              = useAuthGuard();
+  const { events, children }     = useEvents();
+  const today                    = new Date();
+  const [year, setYear]          = useState(today.getFullYear());
+  const [month, setMonth]        = useState(today.getMonth() + 1);
+  const [view, setView]          = useState<"month" | "list">("month");
+  const [filterChildId, setFilter] = useState<string | null>(null);
   const [selectedDate, setSelected] = useState<string | null>(
     `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`
   );
@@ -45,8 +38,7 @@ export default function CalendarPage() {
     [filteredEvents, year, month]
   );
 
-  const eventsByDate = useMemo(() => getEventsByDate(monthEvents), [monthEvents]);
-
+  const eventsByDate   = useMemo(() => getEventsByDate(monthEvents), [monthEvents]);
   const selectedEvents = selectedDate ? (eventsByDate[selectedDate] ?? []) : [];
 
   const prevMonth = () => {
@@ -61,9 +53,13 @@ export default function CalendarPage() {
     setSelected(null);
   };
 
-  const handleSelectDate = (dateStr: string) => {
-    setSelected(dateStr);
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#fff8f0]">
+        <p className="text-gray-400">読み込み中...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-[#fff8f0]">
@@ -91,7 +87,7 @@ export default function CalendarPage() {
                 month={month}
                 eventsByDate={eventsByDate}
                 selectedDate={selectedDate}
-                onSelectDate={handleSelectDate}
+                onSelectDate={(d) => setSelected(d)}
               />
             ) : (
               <ListView events={monthEvents} />
@@ -102,9 +98,7 @@ export default function CalendarPage() {
           {view === "month" && selectedDate && (
             <div className="md:hidden space-y-1">
               <div className="flex items-center justify-between px-1">
-                <h3 className="text-sm font-bold text-gray-600">
-                  日付の詳細
-                </h3>
+                <h3 className="text-sm font-bold text-gray-600">日付の詳細</h3>
                 <Link
                   href={`/events/new?date=${selectedDate}`}
                   className="text-xs text-warm-500 font-medium flex items-center gap-1"
