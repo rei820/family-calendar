@@ -1,0 +1,57 @@
+export type Category =
+  | "memory"
+  | "hajimete"
+  | "hospital"
+  | "birthday"
+  | "nursery"
+  | "outing"
+  | "food"
+  | "growth"
+  | "other";
+
+export type Visibility = "all" | "parents_only" | "grandparents_only";
+
+export type Role = "parent" | "grandparent";
+
+export interface Child {
+  id: string;
+  name: string;
+  birthday?: string; // YYYY-MM-DD
+  avatarColor: string;
+}
+
+export interface FamilyMember {
+  id: string;
+  name: string;
+  role: Role;
+  displayName: string;
+}
+
+export interface EventPhoto {
+  id: string;
+  url: string;
+}
+
+export interface Comment {
+  id: string;
+  eventId: string;
+  author: FamilyMember;
+  text: string;
+  createdAt: string; // ISO string
+}
+
+export interface Event {
+  id: string;
+  date: string; // YYYY-MM-DD
+  category: Category;
+  title: string;
+  diary?: string;
+  visibility: Visibility;
+  childrenIds: string[];
+  createdBy: FamilyMember;
+  photos: EventPhoto[];
+  likeCount: number;
+  commentCount: number;
+  likedByMe: boolean;
+  comments: Comment[];
+}
