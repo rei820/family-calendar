@@ -156,7 +156,7 @@ function EditEventForm() {
             写真（任意）
           </label>
           <PhotoUploader
-            value={photos as PhotoPreview[]}
+            photos={photos as PhotoPreview[]}
             onChange={setPhotos}
           />
         </section>
