@@ -1,13 +1,13 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, BookOpen, PlusCircle, Users } from "lucide-react";
+import { CalendarDays, PlusCircle, Users, Sparkles } from "lucide-react";
 
 const NAV_ITEMS = [
-  { href: "/calendar", icon: CalendarDays, label: "カレンダー" },
-  { href: "/record",   icon: BookOpen,     label: "記録"       },
-  { href: "/events/new", icon: PlusCircle, label: "イベント"   },
-  { href: "/family",   icon: Users,        label: "家族"       },
+  { href: "/calendar",   icon: CalendarDays, label: "カレンダー" },
+  { href: "/events/new", icon: PlusCircle,   label: "イベント"   },
+  { href: "/family",     icon: Users,        label: "家族"       },
+  { href: "/ai",         icon: Sparkles,     label: "AI"         },
 ];
 
 export default function BottomNav() {

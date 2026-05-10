@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
-import { CalendarDays, BookOpen, PlusCircle, Users, LogOut } from "lucide-react";
+import { CalendarDays, BookOpen, PlusCircle, Users, Sparkles, LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 const NAV_ITEMS = [
@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: "/record",      icon: BookOpen,     label: "記録"       },
   { href: "/events/new",  icon: PlusCircle,   label: "イベント作成" },
   { href: "/family",      icon: Users,        label: "家族"       },
+  { href: "/ai",          icon: Sparkles,     label: "AI"         },
 ];
 
 export default function SidebarNav() {
