@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 
-const MODEL = "gemini-2.5-flash-lite-preview-06-17";
+const MODEL = "gemini-2.5-flash-lite";
 
 function buildPrompt(feature: string, data: Record<string, unknown>): string {
   if (feature === "food-analysis") {
