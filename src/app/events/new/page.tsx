@@ -8,7 +8,15 @@ import ChildTargetPicker from "@/components/events/ChildTargetPicker";
 import VisibilityPicker from "@/components/events/VisibilityPicker";
 import PhotoUploader, { type PhotoPreview } from "@/components/events/PhotoUploader";
 import { useEvents } from "@/context/EventsContext";
-import type { Category, Visibility } from "@/types/app";
+import { useAuth } from "@/context/AuthContext";
+import type { Category, FamilyMember, Visibility } from "@/types/app";
+
+const GUEST_AUTHOR: FamilyMember = {
+  id: "guest",
+  name: "ゲスト",
+  displayName: "ゲスト",
+  role: "parent",
+};
 
 function todayStr() {
   const d = new Date();
@@ -19,6 +27,7 @@ function NewEventForm() {
   const router       = useRouter();
   const searchParams = useSearchParams();
   const { addEvent, children: familyChildren } = useEvents();
+  const { user } = useAuth();
 
   const [category,    setCategory]    = useState<Category>("memory");
   const [childrenIds, setChildrenIds] = useState<string[]>([]);
@@ -40,6 +49,9 @@ function NewEventForm() {
     const e = validate();
     if (Object.keys(e).length > 0) { setErrors(e); return; }
     setSaving(true);
+    const author: FamilyMember = user
+      ? { id: user.id, name: user.name, displayName: user.displayName, role: user.role }
+      : GUEST_AUTHOR;
     addEvent({
       date,
       category,
@@ -47,6 +59,7 @@ function NewEventForm() {
       diary: diary.trim() || undefined,
       visibility,
       childrenIds,
+      createdBy: author,
       photos: photos.map((p, i) => ({ id: `new-photo-${i}`, url: p.url })),
     });
     router.push("/calendar");

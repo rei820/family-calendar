@@ -1,7 +1,6 @@
 "use client";
 import { createContext, useContext, useState, ReactNode } from "react";
 import { MOCK_EVENTS } from "@/lib/mockData";
-import { useAuth } from "@/context/AuthContext";
 import type { Event, Comment, Child, FamilyMember } from "@/types/app";
 
 export const AVATAR_COLORS = [
@@ -13,18 +12,13 @@ export const AVATAR_COLORS = [
   { value: "bg-orange-400", label: "オレンジ" },
 ];
 
-const GUEST_USER: FamilyMember = {
-  id: "guest",
-  name: "ゲスト",
-  displayName: "ゲスト",
-  role: "parent",
-};
+type NewEventData = Omit<Event, "id" | "likeCount" | "commentCount" | "likedByMe" | "comments">;
 
 interface EventsContextValue {
   events: Event[];
   children: Child[];
-  addEvent: (event: Omit<Event, "id" | "likeCount" | "commentCount" | "likedByMe" | "comments" | "createdBy">) => void;
-  addComment: (eventId: string, text: string) => void;
+  addEvent: (event: NewEventData) => void;
+  addComment: (eventId: string, text: string, author: FamilyMember) => void;
   toggleLike: (eventId: string) => void;
   addChild: (name: string, birthday: string, avatarColor: string) => void;
   removeChild: (id: string) => void;
@@ -33,19 +27,13 @@ interface EventsContextValue {
 const EventsContext = createContext<EventsContextValue | null>(null);
 
 export function EventsProvider({ children: providerChildren }: { children: ReactNode }) {
-  const { user } = useAuth();
   const [events, setEvents]     = useState<Event[]>(MOCK_EVENTS);
   const [children, setChildren] = useState<Child[]>([]);
 
-  const currentUser: FamilyMember = user
-    ? { id: user.id, name: user.name, displayName: user.displayName, role: user.role }
-    : GUEST_USER;
-
-  const addEvent = (data: Omit<Event, "id" | "likeCount" | "commentCount" | "likedByMe" | "comments" | "createdBy">) => {
+  const addEvent = (data: NewEventData) => {
     const newEvent: Event = {
       ...data,
       id: `evt-${Date.now()}`,
-      createdBy: currentUser,
       likeCount: 0,
       commentCount: 0,
       likedByMe: false,
@@ -54,11 +42,11 @@ export function EventsProvider({ children: providerChildren }: { children: React
     setEvents((prev) => [newEvent, ...prev]);
   };
 
-  const addComment = (eventId: string, text: string) => {
+  const addComment = (eventId: string, text: string, author: FamilyMember) => {
     const comment: Comment = {
       id: `c-${Date.now()}`,
       eventId,
-      author: currentUser,
+      author,
       text,
       createdAt: new Date().toISOString(),
     };

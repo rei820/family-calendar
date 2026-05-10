@@ -2,7 +2,15 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, ChevronDown, ChevronUp } from "lucide-react";
 import { useEvents } from "@/context/EventsContext";
-import type { Comment } from "@/types/app";
+import { useAuth } from "@/context/AuthContext";
+import type { Comment, FamilyMember } from "@/types/app";
+
+const GUEST_AUTHOR: FamilyMember = {
+  id: "guest",
+  name: "ゲスト",
+  displayName: "ゲスト",
+  role: "parent",
+};
 
 interface Props {
   eventId: string;
@@ -20,12 +28,12 @@ function timeAgo(isoStr: string): string {
 
 export default function CommentSection({ eventId, comments, commentCount }: Props) {
   const { addComment } = useEvents();
-  const [open, setOpen]   = useState(false);
-  const [text, setText]   = useState("");
+  const { user } = useAuth();
+  const [open, setOpen]       = useState(false);
+  const [text, setText]       = useState("");
   const [sending, setSending] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-focus input when opened
   useEffect(() => {
     if (open) inputRef.current?.focus();
   }, [open]);
@@ -35,7 +43,10 @@ export default function CommentSection({ eventId, comments, commentCount }: Prop
     const trimmed = text.trim();
     if (!trimmed || sending) return;
     setSending(true);
-    addComment(eventId, trimmed);
+    const author: FamilyMember = user
+      ? { id: user.id, name: user.name, displayName: user.displayName, role: user.role }
+      : GUEST_AUTHOR;
+    addComment(eventId, trimmed, author);
     setText("");
     setSending(false);
   };
@@ -65,7 +76,6 @@ export default function CommentSection({ eventId, comments, commentCount }: Prop
             <div className="space-y-3 border-t border-gray-50 pt-3">
               {comments.map((c) => (
                 <div key={c.id} className="flex gap-2.5">
-                  {/* Avatar */}
                   <div className="w-7 h-7 rounded-full bg-warm-100 flex items-center justify-center text-xs font-bold text-warm-600 shrink-0">
                     {c.author.displayName[0]}
                   </div>

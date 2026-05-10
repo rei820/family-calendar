@@ -1,0 +1,21 @@
+{
+  "name": "家族成長カレンダー",
+  "short_name": "家族カレンダー",
+  "description": "日付でつながる、家族の成長カレンダー",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fff8f0",
+  "theme_color": "#f97316",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
