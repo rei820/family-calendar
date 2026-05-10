@@ -52,9 +52,9 @@ function EditEventForm() {
       childrenIds,
       createdBy: event!.createdBy,
       photos: photos.map((p, i) =>
-        "url" in p
-          ? p
-          : { id: `new-photo-${i}`, url: p.url }
+        "url" in p && "id" in p
+          ? (p as EventPhoto)
+          : { id: `new-photo-${i}`, url: (p as PhotoPreview).url }
       ),
     });
 
