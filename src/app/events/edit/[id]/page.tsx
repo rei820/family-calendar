@@ -114,9 +114,9 @@ function EditEventForm() {
             対象
           </label>
           <ChildTargetPicker
-            value={childrenIds}
+            selectedIds={childrenIds}
             onChange={setChildrenIds}
-            children={familyChildren}
+            familyChildren={familyChildren}
           />
         </section>
 
