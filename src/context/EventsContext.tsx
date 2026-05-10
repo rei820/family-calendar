@@ -285,67 +285,101 @@ export function EventsProvider({ children: providerChildren }: { children: React
   };
 
   const saveChildRecord = async (childId: string, data: Partial<ChildRecord>) => {
-    // 楽観的更新
-    const existingRecord = records.find((r) => r.childId === childId);
-    if (existingRecord) {
-      setRecords((prev) =>
-        prev.map((r) =>
-          r.childId === childId
-            ? { ...r, ...data, updatedAt: new Date().toISOString() }
-            : r
-        )
-      );
-    }
-
     if (!user) return;
 
-    // 既存レコード確認
-    const { data: existing } = await supabase
-      .from("child_records")
-      .select("*")
-      .eq("child_id", childId)
-      .eq("user_id", user.id)
-      .single();
+    try {
+      // 楽観的更新（UI）
+      const existingRecord = records.find((r) => r.childId === childId);
+      const updatedAt = new Date().toISOString();
 
-    if (existing) {
-      // 更新 + 履歴記録
-      await supabase.from("child_records").update({
-        likes: data.likes,
-        dislikes: data.dislikes,
-        allergies: data.allergies,
-        interests: data.interests,
-        updated_at: new Date().toISOString(),
-      }).eq("id", existing.id);
+      if (existingRecord) {
+        setRecords((prev) =>
+          prev.map((r) =>
+            r.childId === childId
+              ? { ...r, likes: data.likes, dislikes: data.dislikes, allergies: data.allergies, interests: data.interests, updatedAt }
+              : r
+          )
+        );
+      }
 
-      // 履歴テーブルに記録
-      await supabase.from("child_records_history").insert({
-        record_id: existing.id,
-        likes: data.likes,
-        dislikes: data.dislikes,
-        allergies: data.allergies,
-        interests: data.interests,
-        changed_at: new Date().toISOString(),
-      });
-    } else {
-      // 新規作成
-      const newRecord: ChildRecord = {
-        id: `rec-${Date.now()}`,
-        childId,
-        ...data,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      setRecords((prev) => [...prev, newRecord]);
+      // DB 確認（maybeSingle を使ってエラーを回避）
+      const { data: existing, error: selectError } = await supabase
+        .from("child_records")
+        .select("*")
+        .eq("child_id", childId)
+        .eq("user_id", user.id)
+        .maybeSingle();
 
-      await supabase.from("child_records").insert({
-        id: newRecord.id,
-        user_id: user.id,
-        child_id: childId,
-        likes: data.likes,
-        dislikes: data.dislikes,
-        allergies: data.allergies,
-        interests: data.interests,
-      });
+      if (selectError && selectError.code !== "PGRST116") {
+        console.error("child_records select error:", selectError);
+        return;
+      }
+
+      if (existing) {
+        // 更新 + 履歴記録
+        const { error: updateError } = await supabase
+          .from("child_records")
+          .update({
+            likes: data.likes ?? null,
+            dislikes: data.dislikes ?? null,
+            allergies: data.allergies ?? null,
+            interests: data.interests ?? null,
+            updated_at: updatedAt,
+          })
+          .eq("id", existing.id);
+
+        if (updateError) {
+          console.error("child_records update error:", updateError);
+          return;
+        }
+
+        // 履歴テーブルに記録
+        const { error: historyError } = await supabase
+          .from("child_records_history")
+          .insert({
+            record_id: existing.id,
+            likes: data.likes ?? null,
+            dislikes: data.dislikes ?? null,
+            allergies: data.allergies ?? null,
+            interests: data.interests ?? null,
+            changed_at: updatedAt,
+          });
+
+        if (historyError) {
+          console.error("child_records_history insert error:", historyError);
+        }
+      } else {
+        // 新規作成
+        const newRecord: ChildRecord = {
+          id: `rec-${Date.now()}`,
+          childId,
+          likes: data.likes,
+          dislikes: data.dislikes,
+          allergies: data.allergies,
+          interests: data.interests,
+          createdAt: updatedAt,
+          updatedAt: updatedAt,
+        };
+        setRecords((prev) => [...prev, newRecord]);
+
+        const { error: insertError } = await supabase
+          .from("child_records")
+          .insert({
+            id: newRecord.id,
+            user_id: user.id,
+            child_id: childId,
+            likes: data.likes ?? null,
+            dislikes: data.dislikes ?? null,
+            allergies: data.allergies ?? null,
+            interests: data.interests ?? null,
+          });
+
+        if (insertError) {
+          console.error("child_records insert error:", insertError);
+        }
+      }
+    } catch (err) {
+      console.error("saveChildRecord error:", err);
     }
   };
 
