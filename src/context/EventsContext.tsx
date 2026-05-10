@@ -2,7 +2,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
-import type { Event, Comment, Child, FamilyMember, Category, Visibility } from "@/types/app";
+import type { Event, Comment, Child, FamilyMember, Category, Visibility, ChildRecord, ChildRecordHistory } from "@/types/app";
 
 export const AVATAR_COLORS = [
   { value: "bg-pink-400",   label: "ピンク"   },
@@ -18,6 +18,7 @@ type NewEventData = Omit<Event, "id" | "likeCount" | "commentCount" | "likedByMe
 interface EventsContextValue {
   events: Event[];
   children: Child[];
+  records: ChildRecord[];
   dataLoading: boolean;
   addEvent: (event: NewEventData) => Promise<void>;
   addComment: (eventId: string, text: string, author: FamilyMember) => Promise<void>;
@@ -26,6 +27,8 @@ interface EventsContextValue {
   removeChild: (id: string) => Promise<void>;
   updateEvent: (id: string, data: Partial<NewEventData>) => Promise<void>;
   deleteEvent: (id: string) => Promise<void>;
+  saveChildRecord: (childId: string, data: Partial<ChildRecord>) => Promise<void>;
+  getRecordHistory: (recordId: string) => Promise<ChildRecordHistory[]>;
 }
 
 const EventsContext = createContext<EventsContextValue | null>(null);
@@ -65,6 +68,7 @@ export function EventsProvider({ children: providerChildren }: { children: React
   const { user }   = useAuth();
   const [events,   setEvents]      = useState<Event[]>([]);
   const [children, setChildren]    = useState<Child[]>([]);
+  const [records,  setRecords]     = useState<ChildRecord[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
 
   // Supabase からデータ読み込み（ユーザーが変わるたびに再取得）
@@ -76,9 +80,10 @@ export function EventsProvider({ children: providerChildren }: { children: React
     }
     const load = async () => {
       setDataLoading(true);
-      const [evRes, chRes] = await Promise.all([
+      const [evRes, chRes, recRes] = await Promise.all([
         supabase.from("events").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
         supabase.from("children").select("*").eq("user_id", user.id).order("created_at", { ascending: true }),
+        supabase.from("child_records").select("*").eq("user_id", user.id),
       ]);
       if (evRes.data) setEvents(evRes.data.map(rowToEvent));
       if (chRes.data) {
@@ -101,6 +106,18 @@ export function EventsProvider({ children: providerChildren }: { children: React
             }
           }
         }
+      }
+      if (recRes.data) {
+        setRecords(recRes.data.map((row) => ({
+          id: row.id,
+          childId: row.child_id,
+          likes: row.likes,
+          dislikes: row.dislikes,
+          allergies: row.allergies,
+          interests: row.interests,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        })));
       }
       setDataLoading(false);
     };
@@ -267,10 +284,92 @@ export function EventsProvider({ children: providerChildren }: { children: React
     });
   };
 
+  const saveChildRecord = async (childId: string, data: Partial<ChildRecord>) => {
+    // 楽観的更新
+    const existingRecord = records.find((r) => r.childId === childId);
+    if (existingRecord) {
+      setRecords((prev) =>
+        prev.map((r) =>
+          r.childId === childId
+            ? { ...r, ...data, updatedAt: new Date().toISOString() }
+            : r
+        )
+      );
+    }
+
+    if (!user) return;
+
+    // 既存レコード確認
+    const { data: existing } = await supabase
+      .from("child_records")
+      .select("*")
+      .eq("child_id", childId)
+      .eq("user_id", user.id)
+      .single();
+
+    if (existing) {
+      // 更新 + 履歴記録
+      await supabase.from("child_records").update({
+        likes: data.likes,
+        dislikes: data.dislikes,
+        allergies: data.allergies,
+        interests: data.interests,
+        updated_at: new Date().toISOString(),
+      }).eq("id", existing.id);
+
+      // 履歴テーブルに記録
+      await supabase.from("child_records_history").insert({
+        record_id: existing.id,
+        likes: data.likes,
+        dislikes: data.dislikes,
+        allergies: data.allergies,
+        interests: data.interests,
+        changed_at: new Date().toISOString(),
+      });
+    } else {
+      // 新規作成
+      const newRecord: ChildRecord = {
+        id: `rec-${Date.now()}`,
+        childId,
+        ...data,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      setRecords((prev) => [...prev, newRecord]);
+
+      await supabase.from("child_records").insert({
+        id: newRecord.id,
+        user_id: user.id,
+        child_id: childId,
+        likes: data.likes,
+        dislikes: data.dislikes,
+        allergies: data.allergies,
+        interests: data.interests,
+      });
+    }
+  };
+
+  const getRecordHistory = async (recordId: string): Promise<ChildRecordHistory[]> => {
+    const { data } = await supabase
+      .from("child_records_history")
+      .select("*")
+      .eq("record_id", recordId)
+      .order("changed_at", { ascending: false });
+    return data?.map((row) => ({
+      id: row.id,
+      recordId: row.record_id,
+      likes: row.likes,
+      dislikes: row.dislikes,
+      allergies: row.allergies,
+      interests: row.interests,
+      changedAt: row.changed_at,
+    })) ?? [];
+  };
+
   return (
     <EventsContext.Provider value={{
-      events, children, dataLoading,
-      addEvent, addComment, toggleLike, addChild, removeChild, updateEvent, deleteEvent,
+      events, children, records, dataLoading,
+      addEvent, addComment, toggleLike, addChild, removeChild, updateEvent, deleteEvent, saveChildRecord, getRecordHistory,
     }}>
       {providerChildren}
     </EventsContext.Provider>
