@@ -1,12 +1,13 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, PlusCircle, Users, Sparkles } from "lucide-react";
+import { CalendarDays, BookOpen, PlusCircle, Users, Sparkles } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/calendar",   icon: CalendarDays, label: "カレンダー" },
   { href: "/events/new", icon: PlusCircle,   label: "イベント"   },
   { href: "/family",     icon: Users,        label: "家族"       },
+  { href: "/record",     icon: BookOpen,     label: "記録"       },
   { href: "/ai",         icon: Sparkles,     label: "AI"         },
 ];
 

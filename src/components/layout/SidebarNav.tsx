@@ -31,7 +31,7 @@ export default function SidebarNav() {
           <span className="text-2xl">🌱</span>
           <div>
             <p className="text-xs text-gray-400 leading-none">家族成長</p>
-            <p className="font-bold text-gray-800 leading-tight">カレンダー</p>
+            <p className="font-bold text-gray-800 leading-tight">ハグクミ</p>
           </div>
         </div>
       </div>

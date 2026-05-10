@@ -1,9 +1,10 @@
 "use client";
 import { useState } from "react";
-import { Plus, Trash2, Baby, ChevronUp } from "lucide-react";
+import { Plus, Trash2, Baby, ChevronUp, Users } from "lucide-react";
 import BottomNav from "@/components/layout/BottomNav";
 import SidebarNav from "@/components/layout/SidebarNav";
 import { useEvents, AVATAR_COLORS } from "@/context/EventsContext";
+import { useAuth } from "@/context/AuthContext";
 
 function formatBirthday(dateStr: string): string {
   if (!dateStr) return "";
@@ -29,6 +30,7 @@ function calcAge(birthday: string): string {
 
 export default function FamilyPage() {
   const { children: registeredChildren, addChild, removeChild } = useEvents();
+  const { user } = useAuth();
 
   const [showForm,   setShowForm]   = useState(false);
   const [name,       setName]       = useState("");
@@ -233,9 +235,29 @@ export default function FamilyPage() {
         {/* ── 家族メンバー ── */}
         <section>
           <h2 className="text-sm font-bold text-gray-600 mb-3">家族メンバー</h2>
-          <div className="card text-center py-8 text-gray-400 text-sm">
-            招待機能は今後実装予定です
-          </div>
+          {user ? (
+            <div className="space-y-2">
+              <div className="card flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-warm-100 flex items-center justify-center text-white text-lg font-bold shrink-0 bg-gradient-to-br from-warm-400 to-warm-600">
+                  {user.displayName[0]}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-gray-800">{user.displayName}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {user.role === "parent" ? "親" : "祖父母"}
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs text-gray-400 text-center py-2">
+                他のメンバーの招待機能は今後実装予定です
+              </p>
+            </div>
+          ) : (
+            <div className="card text-center py-8 text-gray-400 text-sm flex flex-col items-center gap-2">
+              <Users size={24} className="text-gray-300" />
+              <p>メンバー情報を読み込み中...</p>
+            </div>
+          )}
         </section>
       </main>
 

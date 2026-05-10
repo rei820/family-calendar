@@ -81,7 +81,9 @@ export default function CommentSection({ eventId, comments, commentCount }: Prop
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-2">
-                      <span className="text-xs font-semibold text-gray-700">{c.author.displayName}</span>
+                      <span className="text-xs font-semibold text-gray-700">
+                        {c.author.displayName} <span className="text-[10px] text-gray-400 font-normal">({c.author.role === "parent" ? "親" : "祖父母"})</span>
+                      </span>
                       <span className="text-[10px] text-gray-400">{timeAgo(c.createdAt)}</span>
                     </div>
                     <p className="text-sm text-gray-600 mt-0.5 leading-relaxed">{c.text}</p>

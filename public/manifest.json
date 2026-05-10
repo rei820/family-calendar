@@ -1,6 +1,6 @@
 {
-  "name": "家族成長カレンダー",
-  "short_name": "家族カレンダー",
+  "name": "家族成長ハグクミ",
+  "short_name": "ハグクミ",
   "description": "日付でつながる、家族の成長カレンダー",
   "start_url": "/",
   "display": "standalone",

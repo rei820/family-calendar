@@ -1,5 +1,7 @@
 "use client";
-import { MoreHorizontal, Heart } from "lucide-react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { MoreHorizontal, Heart, Edit, Trash2 } from "lucide-react";
 import type { Event } from "@/types/app";
 import { CATEGORIES } from "@/constants/categories";
 import { useEvents } from "@/context/EventsContext";
@@ -11,7 +13,10 @@ interface Props {
 }
 
 export default function EventCard({ event, compact = false }: Props) {
-  const { toggleLike, children: familyChildren } = useEvents();
+  const { toggleLike, children: familyChildren, deleteEvent } = useEvents();
+  const router = useRouter();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const cat = CATEGORIES[event.category];
 
   // Resolve child objects for display
@@ -36,9 +41,36 @@ export default function EventCard({ event, compact = false }: Props) {
             </span>
           ))}
         </div>
-        <button className="text-gray-400 hover:text-gray-600 -mr-1 shrink-0 ml-2">
-          <MoreHorizontal size={18} />
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setMenuOpen((v) => !v)}
+            className="text-gray-400 hover:text-gray-600 -mr-1 shrink-0 ml-2 p-1"
+          >
+            <MoreHorizontal size={18} />
+          </button>
+
+          {menuOpen && (
+            <div className="absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden">
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  router.push(`/events/edit/${event.id}`);
+                }}
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <Edit size={16} />
+                編集
+              </button>
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors border-t border-gray-100"
+              >
+                <Trash2 size={16} />
+                削除
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Title + poster */}
@@ -96,6 +128,34 @@ export default function EventCard({ event, compact = false }: Props) {
           commentCount={event.commentCount}
         />
       </div>
+
+      {/* Delete confirmation dialog */}
+      {confirmDelete && (
+        <div className="fixed inset-0 bg-black/30 flex items-end z-50">
+          <div className="w-full bg-white rounded-t-3xl p-6 space-y-4 animate-in slide-in-from-bottom">
+            <h3 className="font-bold text-gray-800">このイベントを削除しますか？</h3>
+            <p className="text-sm text-gray-600">削除したイベントは復元できません</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDelete(false)}
+                className="flex-1 py-3 border border-gray-200 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={async () => {
+                  await deleteEvent(event.id);
+                  setConfirmDelete(false);
+                  setMenuOpen(false);
+                }}
+                className="flex-1 py-3 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-colors"
+              >
+                削除する
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </article>
   );
 }
